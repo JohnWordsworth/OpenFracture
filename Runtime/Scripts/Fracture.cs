@@ -140,6 +140,7 @@ public class Fracture : MonoBehaviour
             }
 
             var fragmentTemplate = CreateFragmentTemplate();
+			callbackOptions.CallOnTemplateCreated(fragmentTemplate);
 
             if (fractureOptions.asynchronous)
             {
