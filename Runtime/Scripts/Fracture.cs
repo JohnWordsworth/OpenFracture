@@ -2,15 +2,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(Rigidbody))]
 public class Fracture : MonoBehaviour
 {
+    [SerializeField, Tooltip("If not provided, we grab the MeshFilter on this object")] 
+    private MeshFilter _meshFilter;
+    
+    [SerializeField, Tooltip("If not provided, we grab the MeshRenderer on this object")] 
+    private MeshRenderer _meshRenderer;
+    
     public TriggerOptions triggerOptions;
     public FractureOptions fractureOptions;
     public RefractureOptions refractureOptions;
     public CallbackOptions callbackOptions;
+
 
     /// <summary>
     /// The number of times this fragment has been re-fractured.
@@ -22,7 +27,7 @@ public class Fracture : MonoBehaviour
     /// Collector object that stores the produced fragments
     /// </summary>
     private GameObject fragmentRoot;
-
+    
     [ContextMenu("Print Mesh Info")]
     public void PrintMeshInfo()
     {
@@ -42,6 +47,33 @@ public class Fracture : MonoBehaviour
             Debug.Log("");
         }
     }
+    
+    [ContextMenu("Populate Mesh Settings")]
+    public void PopulateMeshSettings()
+    {
+        _meshFilter = GetComponentInChildren<MeshFilter>();
+        _meshRenderer = GetComponentInChildren<MeshRenderer>();
+    }
+
+    void Awake()
+    {
+        if (!_meshFilter)
+        {
+            _meshFilter = GetComponentInChildren<MeshFilter>();
+        }
+
+        if (!_meshRenderer)
+        {
+            _meshRenderer = GetComponentInChildren<MeshRenderer>();
+        }
+
+        if (!_meshFilter || !_meshRenderer)
+        {
+            Debug.LogWarning($"Fracture component {name} cannot determine meshFilter and/or meshRenderer", gameObject);
+        }
+    }
+    
+    
 
     public void CauseFracture()
     {
@@ -122,7 +154,7 @@ public class Fracture : MonoBehaviour
     /// <returns></returns>
     private void ComputeFracture()
     {
-        var mesh = this.GetComponent<MeshFilter>().sharedMesh;
+        var mesh = _meshFilter?.sharedMesh;
 
         if (mesh != null)
         {
@@ -214,7 +246,7 @@ public class Fracture : MonoBehaviour
         // Add materials. Normal material goes in slot 1, cut material in slot 2
         var meshRenderer = obj.AddComponent<MeshRenderer>();
         meshRenderer.sharedMaterials = new Material[2] {
-            this.GetComponent<MeshRenderer>().sharedMaterial,
+            _meshRenderer?.sharedMaterial,
             this.fractureOptions.insideMaterial
         };
 
