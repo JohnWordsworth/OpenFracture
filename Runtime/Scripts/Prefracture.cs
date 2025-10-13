@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(Rigidbody))]
-public class Prefracture : MonoBehaviour
+public class Prefracture : MonoBehaviour, IFracturable
 {
     public TriggerOptions triggerOptions;
     public FractureOptions fractureOptions;
@@ -16,6 +17,11 @@ public class Prefracture : MonoBehaviour
     /// Collector object that stores the produced fragments
     /// </summary>
     private GameObject fragmentRoot;
+    
+    #region IFracturable
+    public MeshFilter FractureMeshFilter => GetComponent<MeshFilter>();
+    public GameObject FractureGameObject => gameObject;
+    #endregion
 
     void OnValidate()
     {
@@ -62,7 +68,7 @@ public class Prefracture : MonoBehaviour
 
             var fragmentTemplate = CreateFragmentTemplate();
             
-            Fragmenter.Fracture(this.gameObject,
+            Fragmenter.Fracture(this,
                                 this.fractureOptions,
                                 fragmentTemplate,
                                 this.fragmentRoot.transform,
@@ -116,8 +122,8 @@ public class Prefracture : MonoBehaviour
         var rigidBody = obj.AddComponent<Rigidbody>();
         // When pre-fracturing, freeze the rigid body so the fragments don't all crash to the ground when the scene starts.
         rigidBody.constraints = RigidbodyConstraints.FreezeAll;
-        rigidBody.drag = this.GetComponent<Rigidbody>().drag;
-        rigidBody.angularDrag = this.GetComponent<Rigidbody>().angularDrag;
+        rigidBody.linearDamping = this.GetComponent<Rigidbody>().linearDamping;
+        rigidBody.angularDamping = this.GetComponent<Rigidbody>().angularDamping;
         rigidBody.useGravity = this.GetComponent<Rigidbody>().useGravity;
 
         var unfreeze = obj.AddComponent<UnfreezeFragment>();

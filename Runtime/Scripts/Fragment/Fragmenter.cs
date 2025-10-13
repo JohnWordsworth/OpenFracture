@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -21,7 +22,7 @@ public static class Fragmenter
     /// <param name="saveToDisk">If true, the generated fragment meshes will be saved to disk so they can be re-used in prefabs.</param>
     /// <param name="saveFolderPath">The save location for the fragments.</param>
     /// <returns></returns>
-    public static void Fracture(GameObject sourceObject,
+    public static void Fracture(IFracturable sourceObject,
                                 FractureOptions options,
                                 GameObject fragmentTemplate,
                                 Transform parent,
@@ -29,7 +30,7 @@ public static class Fragmenter
                                 string saveFolderPath = "")
     {
         // Define our source mesh data for the fracturing
-        FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
+        FragmentData sourceMesh = new FragmentData(sourceObject.FractureMeshFilter.sharedMesh);
  
         // We begin by fragmenting the source mesh, then process each fragment in a FIFO queue
         // until we achieve the target fragment count.
@@ -85,14 +86,14 @@ public static class Fragmenter
     /// <param name="fragmentTemplate">The template GameObject that each fragment will clone</param>
     /// <param name="parent">The parent transform for the fragment objects</param>
     /// <returns></returns>
-    public static IEnumerator FractureAsync(GameObject sourceObject,
+    public static IEnumerator FractureAsync(IFracturable sourceObject,
                                             FractureOptions options,
                                             GameObject fragmentTemplate,
                                             Transform parent,
                                             Action onCompletion)
     {
         // Define our source mesh data for the fracturing
-        FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
+        FragmentData sourceMesh = new FragmentData(sourceObject.FractureMeshFilter.sharedMesh);
  
         // We begin by fragmenting the source mesh, then process each fragment in a FIFO queue
         // until we achieve the target fragment count.
@@ -155,7 +156,7 @@ public static class Fragmenter
     /// <param name="fragmentTemplate">The template GameObject that each slice will clone</param>
     /// <param name="parent">The parent transform for the fragment objects</param>
     /// <returns></returns>
-    public static void Slice(GameObject sourceObject,
+    public static void Slice(IFracturable sourceObject,
                              Vector3 sliceNormal,
                              Vector3 sliceOrigin,
                              SliceOptions options,
@@ -163,7 +164,7 @@ public static class Fragmenter
                              Transform parent)
     {
         // Define our source mesh data for the fracturing
-        FragmentData sourceMesh = new FragmentData(sourceObject.GetComponent<MeshFilter>().sharedMesh);
+        FragmentData sourceMesh = new FragmentData(sourceObject.FractureMeshFilter.sharedMesh);
         // Subdivide the mesh into multiple fragments until we reach the fragment limit
         FragmentData topSlice, bottomSlice;
 
@@ -205,7 +206,7 @@ public static class Fragmenter
     /// <param name="parent">The parent transform for the fragment objects</param>
     /// <param name="i">Fragment counter</param>
     private static void CreateFragment(FragmentData fragmentMeshData,
-                                       GameObject sourceObject,
+                                       IFracturable sourceObject,
                                        GameObject fragmentTemplate,
                                        Transform parent,
                                        bool saveToDisk,
@@ -234,8 +235,9 @@ public static class Fragmenter
             meshes = new Mesh[] { fragmentMesh };
         }
 
-        var parentSize = sourceObject.GetComponent<MeshFilter>().sharedMesh.bounds.size;
-        var parentMass = sourceObject.GetComponent<Rigidbody>().mass;
+        var parentSize = sourceObject.FractureMeshFilter.sharedMesh.bounds.size;
+        var parentRigidBody = sourceObject.FractureGameObject.GetComponentInChildren<Rigidbody>(); 
+        var parentMass = parentRigidBody.mass;
 
         for(int k = 0; k < meshes.Length; k++)
         {
@@ -243,7 +245,7 @@ public static class Fragmenter
             fragment.name = $"Fragment{i}";
             fragment.transform.localPosition = Vector3.zero;
             fragment.transform.localRotation = Quaternion.identity;
-            fragment.transform.localScale = sourceObject.transform.localScale;
+            fragment.transform.localScale = sourceObject.FractureGameObject.transform.localScale;
 
             meshes[k].name = System.Guid.NewGuid().ToString();
 
@@ -259,7 +261,6 @@ public static class Fragmenter
             collider.sharedMaterial = fragment.GetComponent<Collider>().sharedMaterial;
 
             // Compute mass of the sliced object by dividing mesh bounds by density
-            var parentRigidBody = sourceObject.GetComponent<Rigidbody>();
             var rigidBody = fragment.GetComponent<Rigidbody>();
 
             var size = fragmentMesh.bounds.size;

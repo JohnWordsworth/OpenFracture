@@ -1,9 +1,8 @@
-using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
-using UnityEngine.Events;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Fracture : MonoBehaviour
+public class Fracture : MonoBehaviour, IFracturable
 {
     [SerializeField, Tooltip("If not provided, we grab the MeshFilter on this object")] 
     private MeshFilter _meshFilter;
@@ -16,6 +15,10 @@ public class Fracture : MonoBehaviour
     public RefractureOptions refractureOptions;
     public CallbackOptions callbackOptions;
 
+    #region IFracturable
+    public MeshFilter FractureMeshFilter => _meshFilter;
+    public GameObject FractureGameObject => gameObject;
+    #endregion
 
     /// <summary>
     /// The number of times this fragment has been re-fractured.
@@ -31,7 +34,7 @@ public class Fracture : MonoBehaviour
     [ContextMenu("Print Mesh Info")]
     public void PrintMeshInfo()
     {
-        var mesh = this.GetComponent<MeshFilter>().mesh;
+        var mesh = FractureMeshFilter.mesh;
         Debug.Log("Positions");
 
         var positions = mesh.vertices;
@@ -177,7 +180,7 @@ public class Fracture : MonoBehaviour
             if (fractureOptions.asynchronous)
             {
                 StartCoroutine(Fragmenter.FractureAsync(
-                    this.gameObject,
+                    this,
                     this.fractureOptions,
                     fragmentTemplate,
                     this.fragmentRoot.transform,
@@ -203,7 +206,7 @@ public class Fracture : MonoBehaviour
             }
             else
             {
-                Fragmenter.Fracture(this.gameObject,
+                Fragmenter.Fracture(this,
                                     this.fractureOptions,
                                     fragmentTemplate,
                                     this.fragmentRoot.transform);
@@ -260,10 +263,10 @@ public class Fracture : MonoBehaviour
         // Copy rigid body properties to fragment
         var thisRigidBody = this.GetComponent<Rigidbody>();
         var fragmentRigidBody = obj.AddComponent<Rigidbody>();
-        fragmentRigidBody.velocity = thisRigidBody.velocity;
+        fragmentRigidBody.linearVelocity = thisRigidBody.linearVelocity;
         fragmentRigidBody.angularVelocity = thisRigidBody.angularVelocity;
-        fragmentRigidBody.drag = thisRigidBody.drag;
-        fragmentRigidBody.angularDrag = thisRigidBody.angularDrag;
+        fragmentRigidBody.linearDamping = thisRigidBody.linearDamping;
+        fragmentRigidBody.angularDamping = thisRigidBody.angularDamping;
         fragmentRigidBody.useGravity = thisRigidBody.useGravity;
 
         // If refracturing is enabled, create a copy of this component and add it to the template fragment object

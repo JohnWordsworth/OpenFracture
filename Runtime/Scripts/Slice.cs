@@ -1,10 +1,11 @@
+using DefaultNamespace;
 using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(Rigidbody))]
-public class Slice : MonoBehaviour
+public class Slice : MonoBehaviour, IFracturable
 {
     public SliceOptions sliceOptions;
     public CallbackOptions callbackOptions;
@@ -18,6 +19,11 @@ public class Slice : MonoBehaviour
     /// Collector object that stores the produced fragments
     /// </summary>
     private GameObject fragmentRoot;
+    
+    #region IFracturable
+    public MeshFilter FractureMeshFilter => GetComponent<MeshFilter>();
+    public GameObject FractureGameObject => gameObject;
+    #endregion
 
     /// <summary>
     /// Slices the attached mesh along the cut plane
@@ -26,7 +32,7 @@ public class Slice : MonoBehaviour
     /// <param name="sliceOriginWorld">The cut plane origin in world coordinates.</param>
     public void ComputeSlice(Vector3 sliceNormalWorld, Vector3 sliceOriginWorld)
     {
-        var mesh = this.GetComponent<MeshFilter>().sharedMesh;
+        var mesh = FractureMeshFilter.sharedMesh;
 
         if (mesh != null)
         {
@@ -47,7 +53,7 @@ public class Slice : MonoBehaviour
             var sliceNormalLocal = this.transform.InverseTransformDirection(sliceNormalWorld);
             var sliceOriginLocal = this.transform.InverseTransformPoint(sliceOriginWorld);
 
-            Fragmenter.Slice(this.gameObject,
+            Fragmenter.Slice(this,
                              sliceNormalLocal,
                              sliceOriginLocal,
                              this.sliceOptions,
@@ -100,10 +106,10 @@ public class Slice : MonoBehaviour
         // Copy rigid body properties to fragment
         var thisRigidBody = this.GetComponent<Rigidbody>();
         var fragmentRigidBody = obj.AddComponent<Rigidbody>();
-        fragmentRigidBody.velocity = thisRigidBody.velocity;
+        fragmentRigidBody.linearVelocity = thisRigidBody.linearVelocity;
         fragmentRigidBody.angularVelocity = thisRigidBody.angularVelocity;
-        fragmentRigidBody.drag = thisRigidBody.drag;
-        fragmentRigidBody.angularDrag = thisRigidBody.angularDrag;
+        fragmentRigidBody.linearDamping = thisRigidBody.linearDamping;
+        fragmentRigidBody.angularDamping = thisRigidBody.angularDamping;
         fragmentRigidBody.useGravity = thisRigidBody.useGravity;
     
         // If refracturing is enabled, create a copy of this component and add it to the template fragment object
