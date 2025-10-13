@@ -6,7 +6,8 @@ public enum TriggerType
 {
     Collision,
     Trigger,
-    Keyboard
+    Keyboard,
+    None = 10000                  // Never trigger automatically - moved to the end to not mess up existing data
 }
 
 [Serializable]
