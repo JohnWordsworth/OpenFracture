@@ -21,6 +21,7 @@ public class Prefracture : MonoBehaviour, IFracturable
     #region IFracturable
     public MeshFilter FractureMeshFilter => GetComponent<MeshFilter>();
     public GameObject FractureGameObject => gameObject;
+    public Rigidbody Rigidbody => GetComponent<Rigidbody>();
     #endregion
 
     void OnValidate()

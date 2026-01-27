@@ -236,8 +236,8 @@ public static class Fragmenter
         }
 
         var parentSize = sourceObject.FractureMeshFilter.sharedMesh.bounds.size;
-        var parentRigidBody = sourceObject.FractureGameObject.GetComponentInChildren<Rigidbody>(); 
-        var parentMass = parentRigidBody.mass;
+        var parentRigidBody = sourceObject.Rigidbody; 
+        var parentMass = parentRigidBody.mass * sourceObject.PartPercentageOfRigidBody;
 
         for(int k = 0; k < meshes.Length; k++)
         {

@@ -1,7 +1,6 @@
 using DefaultNamespace;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
 public class Fracture : MonoBehaviour, IFracturable
 {
     [SerializeField, Tooltip("If not provided, we grab the MeshFilter on this object")] 
@@ -9,6 +8,15 @@ public class Fracture : MonoBehaviour, IFracturable
     
     [SerializeField, Tooltip("If not provided, we grab the MeshRenderer on this object")] 
     private MeshRenderer _meshRenderer;
+    
+    [SerializeField, Tooltip("Will default to the current object, or a parent, if not set specifically")]
+    private Rigidbody _rigidbody;
+
+    [SerializeField, Tooltip("If the rigid body contains several fracture objects - what percentage is this one of the whole?")] 
+    private float _amountOfParentRigidBody = 1.0f;
+
+    [Tooltip("Fragment Root Parent")]
+    public Transform FragmentRootParent;
     
     public TriggerOptions triggerOptions;
     public FractureOptions fractureOptions;
@@ -18,6 +26,8 @@ public class Fracture : MonoBehaviour, IFracturable
     #region IFracturable
     public MeshFilter FractureMeshFilter => _meshFilter;
     public GameObject FractureGameObject => gameObject;
+    public Rigidbody Rigidbody => _rigidbody;
+    public float PartPercentageOfRigidBody => _amountOfParentRigidBody;
     #endregion
 
     /// <summary>
@@ -74,9 +84,17 @@ public class Fracture : MonoBehaviour, IFracturable
         {
             Debug.LogWarning($"Fracture component {name} cannot determine meshFilter and/or meshRenderer", gameObject);
         }
+
+        if (!_rigidbody)
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+
+            if (!_rigidbody)
+            {
+                _rigidbody = GetComponentInParent<Rigidbody>();
+            }
+        }
     }
-    
-    
 
     public void CauseFracture()
     {
@@ -166,7 +184,15 @@ public class Fracture : MonoBehaviour, IFracturable
             {
                 // Create a game object to contain the fragments
                 this.fragmentRoot = new GameObject($"{this.name}Fragments");
-                this.fragmentRoot.transform.SetParent(this.transform.parent);
+
+                if (FragmentRootParent)
+                {
+                    this.fragmentRoot.transform.SetParent(FragmentRootParent);
+                }
+                else
+                {
+                    this.fragmentRoot.transform.SetParent(this.transform.parent);
+                }
 
                 // Each fragment will handle its own scale
                 this.fragmentRoot.transform.position = this.transform.position;
@@ -261,7 +287,7 @@ public class Fracture : MonoBehaviour, IFracturable
         fragmentCollider.isTrigger = thisCollider.isTrigger;
 
         // Copy rigid body properties to fragment
-        var thisRigidBody = this.GetComponent<Rigidbody>();
+        var thisRigidBody = _rigidbody;
         var fragmentRigidBody = obj.AddComponent<Rigidbody>();
         fragmentRigidBody.linearVelocity = thisRigidBody.linearVelocity;
         fragmentRigidBody.angularVelocity = thisRigidBody.angularVelocity;
