@@ -110,7 +110,7 @@ public class Fracture : MonoBehaviour, IFracturable
             // Because of this, they inherit the parent transform. If the parent transform is not scaled
             // the same in all axes, the fragments will not be rendered correctly.
             var scale = this.transform.parent.localScale;
-            if ((scale.x != scale.y) || (scale.x != scale.z) || (scale.y != scale.z))
+            if (!Mathf.Approximately(scale.x, scale.y) || !Mathf.Approximately(scale.x, scale.z) || !Mathf.Approximately(scale.y, scale.z))
             {
                 Debug.LogWarning($"Warning: Parent transform of fractured object must be uniformly scaled in all axes or fragments will not render correctly.", this.transform);
             }
