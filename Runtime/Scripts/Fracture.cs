@@ -1,6 +1,10 @@
 using DefaultNamespace;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif 
+
 public class Fracture : MonoBehaviour, IFracturable
 {
     [SerializeField, Tooltip("If not provided, we grab the MeshFilter on this object")] 
@@ -98,8 +102,57 @@ public class Fracture : MonoBehaviour, IFracturable
 
     public void CauseFracture()
     {
+        if (Application.isEditor && !Application.isPlaying)
+        {
+#if UNITY_EDITOR
+            EditorDialog.DisplayAlertDialog($"Call CauseFractureInEditor Instead", "You should not call 'CauseFracture' in the editor - call 'CauseFractureInEditor' instead!", "Okay!");
+#endif // UNITY_EDITOR
+            
+            return;
+        }
+
         callbackOptions.CallOnFracture(null, gameObject, transform.position);
         this.ComputeFracture();
+    }
+
+    [ContextMenu("Cause Fracture in Editor")]
+    public GameObject CauseFractureInEditor()
+    {
+#if UNITY_EDITOR
+        if (!Application.isEditor || Application.isPlaying) return null;
+
+        if (!_rigidbody)
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+            
+            if (!_rigidbody)
+            {
+                EditorDialog.DisplayAlertDialog($"Cannot Determine Rigidbody", "Cannot determine rigidbody for fracturing - you must set it manually on the Fracture script.", "Okay!");
+                return null;
+            }
+        }
+        
+        Undo.SetCurrentGroupName($"Fracture {name}");
+        int group = Undo.GetCurrentGroup();
+        
+        if (!FractureMeshFilter)
+        {
+            PopulateMeshSettings();
+        }
+
+        var previousFragmentRoot = this.fragmentRoot;
+        
+        Undo.RecordObject(gameObject, "ComputeFracture");
+        this.ComputeFracture();
+
+        if (!previousFragmentRoot && fragmentRoot)
+        {
+            Undo.RegisterCreatedObjectUndo(fragmentRoot, "Created Fracture Root");
+        }
+        
+        Undo.CollapseUndoOperations(group);
+        return this.fragmentRoot;
+#endif // UNITY_EDITOR
     }
 
     void OnValidate()
@@ -175,6 +228,7 @@ public class Fracture : MonoBehaviour, IFracturable
     /// <returns></returns>
     private void ComputeFracture()
     {
+        bool fracturingInEditor = Application.isEditor && !Application.isPlaying;
         var mesh = _meshFilter?.sharedMesh;
 
         if (mesh != null)
@@ -203,7 +257,7 @@ public class Fracture : MonoBehaviour, IFracturable
             var fragmentTemplate = CreateFragmentTemplate();
 			callbackOptions.CallOnTemplateCreated(fragmentTemplate);
 
-            if (fractureOptions.asynchronous)
+            if (fractureOptions.asynchronous && !fracturingInEditor)
             {
                 StartCoroutine(Fragmenter.FractureAsync(
                     this,
@@ -238,7 +292,14 @@ public class Fracture : MonoBehaviour, IFracturable
                                     this.fragmentRoot.transform);
 
                 // Done with template, destroy it
-                GameObject.Destroy(fragmentTemplate);
+                if (Application.isPlaying)
+                {
+                    GameObject.Destroy(fragmentTemplate);
+                }
+                else
+                {
+                    GameObject.DestroyImmediate(fragmentTemplate);
+                }
 
                 // Deactivate the original object
                 this.gameObject.SetActive(false);
