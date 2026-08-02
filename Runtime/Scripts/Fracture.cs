@@ -119,10 +119,10 @@ public class Fracture : MonoBehaviour, IFracturable
         this.ComputeFracture();
     }
 
+#if UNITY_EDITOR
     [ContextMenu("Cause Fracture in Editor")]
     public GameObject CauseFractureInEditor()
     {
-#if UNITY_EDITOR
         if (!Application.isEditor || Application.isPlaying) return null;
 
         void EnsureFolderExists(string path)
@@ -216,8 +216,8 @@ public class Fracture : MonoBehaviour, IFracturable
 
         Undo.CollapseUndoOperations(group);
         return this.fragmentRoot;
-#endif // UNITY_EDITOR
     }
+#endif // UNITY_EDITOR
 
     void OnValidate()
     {
