@@ -115,7 +115,7 @@ public class Fracture : MonoBehaviour, IFracturable
             return;
         }
 
-        callbackOptions.CallOnFracture(null, gameObject, transform.position);
+        callbackOptions.CallOnFracture(null, gameObject, transform.position, null);
         this.ComputeFracture();
     }
 
@@ -252,7 +252,7 @@ public class Fracture : MonoBehaviour, IFracturable
                 if (collisionForce > triggerOptions.minimumCollisionForce && 
                    (!triggerOptions.filterCollisionsByTag || (triggerOptions.filterCollisionsByTag && tagAllowed)))
                 {
-                    callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point);
+                    callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point, collision);
                     this.ComputeFracture();
                 }
             }
@@ -268,7 +268,7 @@ public class Fracture : MonoBehaviour, IFracturable
 
             if (triggerOptions.filterCollisionsByTag && tagAllowed)
             {
-                callbackOptions.CallOnFracture(collider, gameObject, transform.position);
+                callbackOptions.CallOnFracture(collider, gameObject, transform.position, null);
                 this.ComputeFracture();
             }
         }
@@ -280,7 +280,7 @@ public class Fracture : MonoBehaviour, IFracturable
         {
             if (Input.GetKeyDown(triggerOptions.triggerKey))
             {
-                callbackOptions.CallOnFracture(null, gameObject, transform.position);
+                callbackOptions.CallOnFracture(null, gameObject, transform.position, null);
                 this.ComputeFracture();
             }
         }

@@ -6,7 +6,7 @@ using UnityEngine.Events;
 public class CallbackOptions
 {
     [Tooltip("This callback is invoked when a fracture has been triggered. Not called for slicing and prefracturing.")]
-    public UnityEvent<Collider, GameObject, Vector3> onFracture;
+    public UnityEvent<Collider, GameObject, Vector3, Collision> onFracture;
     
     [Tooltip("This callback is invoked when a fracture effect generates the internal template which is used as a basis for each created game object.")]
     public UnityEvent<GameObject> onTemplateCreated;
@@ -21,9 +21,9 @@ public class CallbackOptions
         this.onCompleted = null;
     }
 
-    public void CallOnFracture(Collider instigator, GameObject fracturedObject, Vector3 point)
+    public void CallOnFracture(Collider instigator, GameObject fracturedObject, Vector3 point, Collision collision)
     {
-        onFracture?.Invoke(instigator, fracturedObject, point);
+        onFracture?.Invoke(instigator, fracturedObject, point, collision);
     }
 
     public void CallOnTemplateCreated(GameObject templateObject)
